@@ -53,7 +53,7 @@ ggplot(data_long3, aes(x = period, y = House_growth, color = Provence)) +
   labs(
     title = "Housing Supply Over Time by Dutch Provence",
     x = "Year",
-    y = "House_ Growth",
+    y = "House Growth",
     color = "Provence"
   ) +
   theme_minimal()
@@ -69,5 +69,5 @@ future_map <- left_join(prov_map, future_data, by = "statnaam")
 
 ggplot(future_map) +
   geom_sf(aes(fill = supply_value)) +
-  labs(title = "Housing Supply (future 7 Years)", fill = "supply") + 
+  labs(title = "Estimated Housing Supply (2023-2030)", fill = "supply") + 
   theme_void()

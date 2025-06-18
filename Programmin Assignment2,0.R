@@ -46,10 +46,32 @@ data_long3 <- data_long3 %>%
 data_long3 <- data_long3 %>%
   mutate(Percent_growth = (House_growth / lag(total_houses)) * 100)
 
+ggplot(future_map) +
+  geom_sf(aes(fill = supply_value)) +
+  scale_fill_gradient(low = "azure", high = "darkblue") +
+  labs(title = "Estimated Housing Supply (2023-2030)", fill = "supply") + 
+  theme_void()
+
+provence_totals <- data_long3 %>%
+  select(Provence, total_houses_added) %>%
+  distinct()
+
+overall_mean_added <- mean(provence_totals$total_houses_added, na.rm = TRUE)
+
+provence_totals <- provence_totals %>%
+  mutate(growth_group = ifelse(total_houses_added >= overall_mean_added, "Above Average", "Below Average"))
+
+data_grouped <- data_long3 %>%
+  left_join(provence_totals, by = "Provence")
+
+group_percent <- data_grouped %>%
+  group_by(growth_group) %>%
+  summarise(avg_percent_growth = mean(Percent_growth, na.rm = TRUE))
+
 
 #Plotting a Line Graph
 ggplot(data_long3, aes(x = period, y = House_growth, color = Provence)) +
-  geom_line(size = 0.5) +
+  geom_line(size = 1) +
   labs(
     title = "Housing Supply Over Time by Dutch Provence",
     x = "Year",
@@ -67,7 +89,15 @@ future_data <- data2 |>
 
 future_map <- left_join(prov_map, future_data, by = "statnaam")
 
-ggplot(future_map) +
-  geom_sf(aes(fill = supply_value)) +
-  labs(title = "Estimated Housing Supply (2023-2030)", fill = "supply") + 
-  theme_void()
+#Plotting the Subgroup Map
+ggplot(group_percent, aes(x = growth_group, y = avg_percent_growth, fill = growth_group)) +
+  geom_col(width = 1) +
+  scale_fill_manual(values = c("Above Average" = "blue", "Below Average" = "red")) +
+  labs(
+    title = "Average % Growth by Provence Group (based on Total Houses Added)",
+    subtitle = paste("Mean Total Added =", round(overall_mean_added, 0)),
+    x = "Grouped by mean total houses added",
+    y = "Average % Growth",
+    fill = "Growth Category"
+  ) +
+  theme_minimal()

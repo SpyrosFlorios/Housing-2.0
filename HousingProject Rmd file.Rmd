@@ -1,0 +1,309 @@
+---
+title: "Template"
+author: "Studentnames and studentnumbers here"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Set-up your environment
+
+```{r package_install, include=FALSE}
+install.packages("tidyverse")
+install.packages("yaml")
+install.packages("rmarkdown")
+```
+
+```{r packages}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(cbsodataR)
+library(sf)
+```
+
+# Title Page
+
+title: "Quantifying the Dutch Housing Crisis"
+authors: 
+  Niels Vaartjes
+  Max Peters
+  Sven Beukers
+  Sander Krabbe
+  Stef Willemsens
+  Niels van Den Bosch
+  Spyros Florios
+date: "24-06-2025"
+Tutorial lecturer: C. Schouwenaar
+---
+
+
+Include your tutorial lecturer's name
+
+# Part 1 - Identify a Social Problem
+## 1.1 Describe the Social Problem
+In recent years, the Netherlands has been facing a serious housing crisis. There are not enough homes available for the number of people looking for a house. According to ABF Research (2023), there was a shortage of 390,000 homes in 2023, and they expected an increase to 400,000 homes by 2024. This shortage makes it more difficult for especially young people, students, and low- or middle-income families to find affordable housing. 
+The Dutch government wants to build 900,000 new homes by 2030 (ABN AMRO, 2025). However, in the past few years, the construction of new homes has not kept up with the demand. Last year, only about 69,000 new homes were built, mainly in provinces like South Holland, North Holland, and North Brabant (CBS, 2025). 
+There are several reasons for the housing shortage. The first one is the increasing number of single-person households. More people are choosing to live alone, either by choice or due to demographic trends such as higher divorce rates and young adults leaving their parents. This increases the demand for smaller homes, especially in urban areas where space is already limited. Another important factor is the aging population. Elderly people remain in their current homes for longer periods and these homes often are larger than their current needs. This slows down the turnover in the housing market and reduces the availability of homes for the younger generations. (ABN AMRO, 2025) Also the house prices are playing a significant role, which have risen rapidly. These prices increased by more than 8-10% per year, due to the rising production costs, the limited supply of homes, and an increase in demand (Nussupbekova, 2025). 
+This housing shortage is not only an economic issue, but also an important social one. It affects people’s quality of life and limits their ability to move for work or education. That is why it is important to understand how many houses are being built in each province, especially in the upcoming 7 years. 
+
+
+# Part 2 - Data Sourcing
+
+## 2.1 Load in the data
+In this study, we quantify the housing crisis in the Netherlands using two datasets.  The first dataset (which will be called data) was sourced from the Central Bureau voor de Statistiek (CBS), the Dutch national statistics agency's open data webpage.  It includes the number of homes in each province for the years 2012 through 2019.  The national registration of addresses and buildings (BAG) is the source of this data, which is made accessible through CBS StatLine (e.g., “Woningvoorraad per provincie”, dataset 85058NED). The source is credible and appropriate because CBS is the official statistics bureau, and the data come from administrative records rather than surveys, ensuring comprehensive coverage of housing stock.  The second dataset (which will be called data2) comes from the Dutch government’s Ministry of Housing (Rijksoverheid) and outlines the planned number of new houses to be built per province for the period 2023–2030.  This policy data (from Rijksoverheid’s publication on new housing plans) is crucial as it represents future construction goals.  Using this alongside the historical CBS data allows us to compare past trends with future targets.
+One drawback is that the projected housing numbers are an overall estimate for 2023–2030 and do not account for annual growth or completion probability, which adds a degree of uncertainty. Furthermore, because of data limitations, our analysis does not directly address affordability or demand-side concerns, instead, it concentrates on the quantity of housing.  The data adequately captures the essential supply-side component of the housing issue in spite of these drawbacks.
+```{r loading_data}
+data <- read.csv("C:/Users/Niels/Documents/Housing-2.0/Programming.csv")
+data2 <- read.csv("C:/Users/Niels/Documents/Housing-2.0/Programming2.csv")
+```
+## 2.2 Provide a short summary of the dataset(s)
+
+```{r}
+head(data)
+head(data2)
+```
+Data:
+Provence Total.Houses Period  X Provence.1 Total.Houses.1 Period.1 X.1 Provence.2 Total.Houses.2 Period.2 X.2 Provence.3 Total.Houses.3 Period.3 X.3 Provence.4
+1 Groningen       256775   2012 NA  Friesland         275785     2012  NA    Drenthe         206365     2012  NA Overijssel         464185     2012  NA Flevoland 
+2 Groningen       258585   2013 NA  Friesland         277215     2013  NA    Drenthe         207395     2013  NA Overijssel         467710     2013  NA Flevoland 
+3 Groningen       261420   2014 NA  Friesland         280245     2014  NA    Drenthe         209540     2014  NA Overijssel         470930     2014  NA Flevoland 
+4 Groningen       263575   2015 NA  Friesland         282155     2015  NA    Drenthe         210670     2015  NA Overijssel         474235     2015  NA Flevoland 
+5 Groningen       265495   2016 NA  Friesland         283590     2016  NA    Drenthe         212020     2016  NA Overijssel         478010     2016  NA Flevoland 
+6 Groningen       267640   2017 NA  Friesland         285450     2017  NA    Drenthe         213540     2017  NA Overijssel         482040     2017  NA Flevoland 
+  Total.Houses.4 Period.4 X.4  Provence.5 Total.Houses.5 Period.5 X.5 Provence.6 Total.Houses.6 Period.6 X.6    Provence.7 Total.Houses.7 Period.7 X.7
+1         152970     2012  NA Gelderland          818000     2012  NA   Utrecht          509105     2012  NA Noord-Holland        1202240     2012  NA
+2         154530     2013  NA Gelderland          830925     2013  NA   Utrecht          514190     2013  NA Noord-Holland        1211640     2013  NA
+3         156310     2014  NA Gelderland          841145     2014  NA   Utrecht          520195     2014  NA Noord-Holland        1226955     2014  NA
+4         157665     2015  NA Gelderland          849665     2015  NA   Utrecht          525815     2015  NA Noord-Holland        1238780     2015  NA
+5         159170     2016  NA Gelderland          857830     2016  NA   Utrecht          531025     2016  NA Noord-Holland        1250925     2016  NA
+6         160965     2017  NA Gelderland          861620     2017  NA   Utrecht          536825     2017  NA Noord-Holland        1259180     2017  NA
+    Provence.8 Total.Houses.8 Period.8 X.8 Provence.9 Total.Houses.9 Period.9 X.9   Provence.10 Total.Houses.10 Period.10 X.10 Provence.11 Total.Houses.11
+1 Zuid-Holland        1529945     2012  NA    Zeeland         165605     2012  NA Noord-Brabant         1022145      2012   NA    Limburg           489825
+2 Zuid-Holland        1541470     2013  NA    Zeeland         166560     2013  NA Noord-Brabant         1032045      2013   NA    Limburg           492615
+3 Zuid-Holland        1556500     2014  NA    Zeeland         168170     2014  NA Noord-Brabant         1045045      2014   NA    Limburg           496940
+4 Zuid-Holland        1570225     2015  NA    Zeeland         168955     2015  NA Noord-Brabant         1054120      2015   NA    Limburg           499210
+5 Zuid-Holland        1584340     2016  NA    Zeeland         169875     2016  NA Noord-Brabant         1063175      2016   NA    Limburg           502060
+6 Zuid-Holland        1597125     2017  NA    Zeeland         170610     2017  NA Noord-Brabant         1073490      2017   NA    Limburg           505345
+  Period.11
+1      2012
+2      2013
+3      2014
+4      2015
+5      2016
+6      2017
+
+Data2:
+Provence Total.Houses    Period
+1  Groningen        28509 2023-2030
+2    Fryslân         1772 2023-2030
+3    Drenthe        13864 2023-2030
+4 Overijssel          423 2023-2030
+5  Flevoland        39743 2023-2030
+6 Gelderland          104 2023-2030
+``` r
+inline_code = TRUE
+```
+## 2.3 Describe the type of variables included
+
+The main variables in the datasets include:
+Provence (Qualitative): This is the name of the Dutch provinces. These are standard administrative regions. Province names are labels from the data and involve no personal or survey data.
+Total Houses (Quantitative ): This represents the total number of residential houses in a province for a given year. In the CBS dataset, it is measured as the housing stock recorded in the BAG at the end of each year 2012–2019. In the planning dataset, it represents the target number of new houses to be built in the province over the period 2023–2030. For this period, the figures come from policy documents (Rijksoverheid) and are likely based on provincial housing development plans.
+Temporal (range) is the year/period.  This is the year (2012–2019) that corresponds to the dwelling stock count in the historical dataset.  The range "2023-2030" is used in the planning data to 
+ Every variable comes from official or administrative sources rather than surveys or self-reports.  Instead of measuring income or personal health, they assess housing supply, which is a socioeconomic indicator.  This indicates that data is aggregated by region and privacy is unaffected. The use of administrative data ensures consistency in how the variables are defined and measured across regions and years.
+
+
+# Part 3 - Quantifying
+
+## 3.1 Data cleaning
+
+The first part of data cleaning constited of changing small erros, like change the province name "Friesland" to its origanal name "Fryslân". We also flipped the "data" table since it was wide and to do the things we wanted to do we needed it to be long, from here on out we will refer to "data" as "data_long3". We also got rid of al the NA's in data_long3.
+Then the lines below that is us getting our data ready to make a subpopulation graph, we created a mean, which we would later use to group the provinces into two groups: above avarage and below avarage, we would later compare the percentile growth of these two. 
+
+```{r data_cleaning}
+
+data2$Provence[data2$Provence == "Friesland"] <- "Fryslân"
+
+data2$Total.Houses <- as.numeric(gsub("\\.","", data2$Total.Houses))
+
+data_long3 <- bind_rows(Provence_blocks)
+
+data_long3 <- data_long3 %>%
+  filter(!is.na(Provence), !is.na(total_houses), !is.na(period))
+
+Provence_blocks <- list()
+
+for (i in seq(1, ncol(data), by = 4)) {
+  temp <- data[, c(i, i + 1, i +2)]
+  names(temp) <- c("Provence", "total_houses", "period")
+  Provence_blocks[[i]] <- temp
+
+```
+
+The the lines below this text are us getting our data ready to make a sub-population graph, we created a mean, which we would later use to group the provinces into two groups: above avarage and below avarage, we would later compare the percentile growth of these two, we will go in depth about what exactly we did when we get to the sub-population graph. 
+
+```{r data_cleaning}
+  data_grouped <- data_long3 %>%
+  left_join(provence_totals, by = "Provence")
+
+group_percent <- data_grouped %>%
+  group_by(growth_group) %>%
+  summarise(avg_percent_growth = mean(Percent_growth, na.rm = TRUE))
+
+provence_totals <- data_long3 %>%
+  select(Provence, total_houses_added) %>%
+  distinct()
+
+overall_mean_added <- mean(provence_totals$total_houses_added, na.rm = TRUE)
+```
+
+## 3.2 Generate necessary variables
+
+Variable 1
+Definition:
+The total number of homes added over the observed period (2012–2019) is obtained by summing the House_growth values for each province throughout all available years.
+
+Purpose:
+By comparing provinces over the entire period, it is possible to determine which provinces have made the most (or smallest) contributions to the expansion of the nation's housing supply.
+
+```{r gen_var1}
+data_long3 <- data_long3 %>%
+  arrange(Provence, period) %>%
+  group_by(Provence) %>%
+  mutate(total_houses_added = sum(House_growth, na.rm = TRUE))
+```
+
+Variable 2
+Definition:
+This variable shows the change in the number of homes for each province from year to year. It shows how many houses were added (or removed) in a given year as compared to the year before.
+
+Purpose:
+Its goal is to record the yearly pace of development so that we can spot construction booms, stalls, or even contractions. This is essential for determining if the housing problem is getting better or getting worse over time.
+
+```{r gen_var2}
+data_long3 <- data_long3 %>%
+  arrange(Provence, period) %>%
+  group_by(Provence) %>%
+  mutate(House_growth = total_houses - lag(total_houses))
+```
+
+Variable 3
+Definition:
+This variable provides a relative measure of growth by expressing the annual House_growth as a percentage of the housing stock from the prior year.
+
+Purpose:
+By taking into consideration province size, percentage growth—as opposed to absolute growth—indicates whether smaller provinces are growing proportionately more quickly or more slowly than larger ones. Finding efficiency and urgency in regional planning requires this.
+```{r gen_var2}
+data_long3 <- data_long3 %>%
+  mutate(Percent_growth = (House_growth / lag(total_houses)) * 100)
+```
+
+Variable 4
+Definition:
+This categorizes each province into either "Above Average" or "Below Average" based on whether its total_houses_added exceeds the national mean over the period.
+
+Purpose:
+This will be used in the sub-population analysis, helping us distinguish between high-performing and low-performing provinces. This classification supports comparisons of average growth rates between groups and reveals spatial imbalances in housing development efforts.
+```{r gen_var2}
+provence_totals <- provence_totals %>%
+  mutate(growth_group = ifelse(total_houses_added >= overall_mean_added, "Above Average", "Below Average"))
+```
+## 3.3 Visualize temporal variation
+To visualize temporal variation, we plot the housing stock over time (2012–2019) for each province. This shows how the number of houses has evolved annually in different regions.
+
+Two interesting events show:
+
+In 2019, Utrecht's housing expansion hit an unprecedented high of nearly 22,000 units, more than doubling its average growth in previous years. The completion of significant residential development projects that had been in progress for several years and reached their climax that year is probably what caused this abrupt increase. In 2019, it is a highly substantial anomaly that distinguishes Utrecht from the rest of the nation.
+
+On the other hand, Zuid-Holland, which has historically been among the leading producers of homes, saw a sharp decline in 2019. From steady levels above 12,000 units annually, its housing growth fell to less than 1,000 units. This sudden drop suggests that there may have been a delay in the issuance of permits, construction, or planning. The size and demand of Zuid-Holland make such a decline in annual output crucial.
+
+```{r}
+ggplot(data_long3, aes(x = period, y = House_growth, color = Provence)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Housing Supply Over Time by Dutch Provence",
+    x = "Year",
+    y = "House Growth",
+    color = "Provence"
+  ) +
+  theme_minimal()
+```
+
+## 3.4 Visualize spatial variation
+Now we turn to spatial variation, which will show how the housing crisis differs across regions. We visualize a thematic map of the Netherlands by province, using the planned number of new houses (2023–2030) as the indicator. This highlights which provinces are slated to receive more housing investment in the coming years.
+Inequalities between provinces in the present housing stock and future plans are visible in the spatial visualization. The provinces with the most new dwellings scheduled for construction by 2030 are Zuid-Holland (247,896 new houses anticipated) and Noord-Holland (183,600). The biggest housing stocks and population pressures are currently found in these highly urbanized areas. Attempts to alleviate the acute shortages there are reflected in the high planned numbers. However, the construction targets are somewhat lower in more rural or sparserly inhabited provinces like Zeeland (16,500 planned) and Drenthe (13,864 planned). Although there are fewer people living in these places, the disparity between highly and sparsely populated areas may develop as a result of the relatively low anticipated expansion. Regions that already have smaller housing stocks will grow even more slowly in absolute terms, potentially increasing regional disparities if those areas also face any increase in demand.
+
+```{r visualise_map}
+prov_map <- cbs_get_sf(region = "provincie", year = 2023)
+
+future_data <- data2 |>
+  rename(statnaam = Provence,   
+         supply_value = Total.Houses)   
+
+future_map <- left_join(prov_map, future_data, by = "statnaam")
+
+
+ggplot(future_map) +
+  geom_sf(aes(fill = supply_value)) +
+  scale_fill_gradient(low = "azure", high = "darkblue") +
+  labs(title = "Estimated Housing Supply (2023-2030)", fill = "supply") + 
+  theme_void()
+```
+## 3.5 Visualize sub-population variation
+
+What is the poverty rate by state?
+For sub-population variation, we interpret “sub-populations” as provinces. One way for us tow make a sub-population graph to compare provinces by a relative measure, such as the percentage growth of housing per province compared to grouped by mean total houses provinces. This reveals which the disparity between the smaller and bigger provinces, for it compares a percentage to numbers.
+
+```{r visualise_subpopulations}
+ggplot(group_percent, aes(x = growth_group, y = avg_percent_growth, fill = growth_group)) +
+  geom_col(width = 1) +
+  scale_fill_manual(values = c("Above Average" = "blue", "Below Average" = "red")) +
+  labs(
+    title = "Average % Growth by Provence Group (based on Total Houses Added)",
+    subtitle = paste("Mean Total Added =", round(overall_mean_added, 0)),
+    x = "Grouped by mean total houses added",
+    y = "Average % Growth",
+    fill = "Growth Category"
+  ) +
+  theme_minimal()
+  )
+```
+
+Here you provide a description of why the plot above is relevant to your specific social problem.
+
+## 3.6 Event analysis
+
+To explore disruptions in housing development, we created a comparison of housing growth between 2018 and 2019, which are the final two years in our dataset. This really helped to show what our line graph earlier had already made us aware of, which is that Utrecht had a massive positive change and Zuid-Holland decreased greatly.
+
+```{r analysis}
+event_analysis <- data_long3 %>%
+  filter(period %in% c(2018, 2019)) %>%
+  group_by(Provence, period) %>%
+  summarise(mean_growth = mean(House_growth, na.rm = TRUE)) %>%
+  pivot_wider(names_from = period, values_from = mean_growth, names_prefix = "year_") %>%
+  mutate(change = year_2019 - year_2018)
+```
+
+# Part 4 - Discussion
+
+## 4.1 Discuss your findings
+Our findings offer a data-driven view of the Dutch housing crisis by quantifying past housing developments and future construction goals divided into the 12 Dutch provinces. By combining CBS datasets and policy information, we were able to discover disparities in housing growth across the provinces. 
+                  Spatial variation shows inequality between provinces in the current housing stock and future planning. Provinces like Zuid-Holland (247.896 planned new houses) and Noord-Holland (183.600) are to receive the biggest number of new homes between 2023 and 2030. These numbers are presented by the growing pressure in densely populated areas. On the other hand, more rural provinces such as Drenthe (13.864 new houses) and Zeeland (16.500 new houses) are planning fewer houses, will widen the gap between the densely-and the sparsely populated areas. 
+                  Temporal trends from the data between 2012 and 2019 reveal that the housing stock has increased each year across all provinces. However, the growth pace was not enough to match the growth and demand of the population. Zuid-Holland, despite having the highest population of the provinces, has decreasing numbers in terms of growth rate in new housing additions around 2019, suggesting trouble in planning, permitting, or construction. In contrast, Utrecht showed a spike in housing growth that year, because of large development projects reaching completion.
+Sub-population variation, here operationalized as provincial differences, reveals that while housing needs are national, local realities vary heavily. Provinces with high expected construction (e.g., Utrecht, Gelderland) are the ones already facing pressure due to urbanization. Regions with lower targets may risk problems for specific groups such as starters or migrants, even if population growth is lower.
+The results of our analysis show that even though national policy sets big targets (900,000 new homes from 2023 - 2030), actual execution depends on regional capacity, demand, and speed and quality of government processes. The current data suggest that disparities in execution may worsen the situation rather than solving it.
+In conclusion, we find that while planned housing construction aligns with population centers, regional inequalities persist. There is a risk that underserved regions remain left behind, and that even high-growth provinces fail to meet real demand due to delayed execution or affordability problems. Our work emphasizes the importance of tracking where homes are built and how timely, balanced, and effective housing policy is on the ground.
+
+# Part 5 - Reproducibility
+
+## 5.1 Github repository link
+
+Provide the link to your PUBLIC repository here: https://github.com/SpyrosFlorios/Housing-2.0
+
+## 5.2 Reference list
+-	ABN AMRO Bank. (2025). Woningmarkt - Bouwen naar behoefte. https://www.abnamro.com/research/nl/onze-research/woningmarkt-bouwen-naar-behoefte
+-	Centraal Bureau voor de Statistiek. (z.d.). Wonen. Centraal Bureau Voor de Statistiek. https://www.cbs.nl/nl-nl/visualisaties/monitor-brede-welvaart-en-de-sustainable-development-goals/hier-en-nu/wonen#:~:text=Door%20ABF%20Research%20is%20voor,een%20kleine%20aanvullende%20aardgaslevering%20plaatsvindt
+-	Centraal Bureau voor de Statistiek. (2025, 30 januari). 82 duizend woningen erbij in 2024, minder dan voorgaande vijf jaar. Centraal Bureau Voor de Statistiek. https://www.cbs.nl/nl-nl/nieuws/2025/05/82-duizend-woningen-erbij-in-2024-minder-dan-voorgaande-vijf-jaar
+-	 Primos 2023 - ABF Research. (2023, 11 september). ABF Research. https://abfresearch.nl/publicaties/primos-2023/
+-	Nussupbekova, T. (2025, 2 juni). The Netherlands’ Residential Property Market Analysis 2025. Globalpropertyguide. https://www.globalpropertyguide.com/europe/netherlands/price-history
+- Rijksoverheid. (z.d.). Nieuwe woningen. Rijksoverheid. https://www.rijksoverheid.nl/onderwerpen/volkshuisvesting/nieuwe-woningen
+- Centraal Bureau voor de Statistiek. (z.d.). Woningvoorraad; regio, type woning, 1 januari. CBS StatLine. https://opendata.cbs.nl/statline/#/CBS/nl/dataset/85058NED/table?ts=1748960634284

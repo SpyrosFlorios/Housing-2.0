@@ -100,4 +100,25 @@ ggplot(group_percent, aes(x = growth_group, y = avg_percent_growth, fill = growt
     y = "Average % Growth",
     fill = "Growth Category"
   ) +
+
+#Event analysis
+event_analysis <- data_long3 %>%
+  filter(period %in% c(2018, 2019)) %>%
+  group_by(Provence, period) %>%
+  summarise(mean_growth = mean(House_growth, na.rm = TRUE)) %>%
+  pivot_wider(names_from = period, values_from = mean_growth, names_prefix = "year_") %>%
+  mutate(change = year_2019 - year_2018)
+
+ggplot(event_analysis, aes(x = reorder(Provence, change), y = change, fill = change > 0)) +
+  geom_col() +
+  scale_fill_manual(values = c("TRUE" = "blue", "FALSE" = "red"), labels = c("Decrease", "Increase")) +
+  labs(
+    title = "Change in Housing Growth: 2019 vs 2018",
+    x = "Province",
+    y = "Change in House Growth",
+    fill = "Growth Change"
+  ) +
+  theme_minimal() +
+  coord_flip()
+
   theme_minimal()
